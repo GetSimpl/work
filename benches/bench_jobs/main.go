@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/albrow/jobs"
-	"github.com/gocraft/health"
+	"github.com/GetSimpl/health"
 	"github.com/gomodule/redigo/redis"
 )
 

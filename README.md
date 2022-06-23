@@ -1,4 +1,4 @@
-# gocraft/work [![GoDoc](https://godoc.org/github.com/gocraft/work?status.png)](https://godoc.org/github.com/gocraft/work)
+# gocraft/work [![GoDoc](https://godoc.org/github.com/GetSimpl/work?status.png)](https://godoc.org/github.com/GetSimpl/work)
 
 gocraft/work lets you enqueue and processes background jobs in Go. Jobs are durable and backed by Redis. Very similar to Sidekiq for Go.
 
@@ -21,7 +21,7 @@ package main
 
 import (
 	"github.com/gomodule/redigo/redis"
-	"github.com/gocraft/work"
+	"github.com/GetSimpl/work"
 )
 
 // Make a redis pool
@@ -57,7 +57,7 @@ package main
 
 import (
 	"github.com/gomodule/redigo/redis"
-	"github.com/gocraft/work"
+	"github.com/GetSimpl/work"
 	"os"
 	"os/signal"
 )
@@ -143,7 +143,7 @@ func (c *Context) Export(job *work.Job) error {
 ```
 
 ## Redis Cluster
-If you're attempting to use gocraft/work on a `Redis Cluster` deployment, then you may encounter a `CROSSSLOT Keys in request don't hash to the same slot` error during the execution of the various lua scripts used to manage job data (see [Issue 93](https://github.com/gocraft/work/issues/93#issuecomment-401134340)). The current workaround is to force the keys for an entire `namespace` for a given worker pool on a single node in the cluster using [Redis Hash Tags](https://redis.io/topics/cluster-spec#keys-hash-tags). Using the example above:
+If you're attempting to use gocraft/work on a `Redis Cluster` deployment, then you may encounter a `CROSSSLOT Keys in request don't hash to the same slot` error during the execution of the various lua scripts used to manage job data (see [Issue 93](https://github.com/GetSimpl/work/issues/93#issuecomment-401134340)). The current workaround is to force the keys for an entire `namespace` for a given worker pool on a single node in the cluster using [Redis Hash Tags](https://redis.io/topics/cluster-spec#keys-hash-tags). Using the example above:
 
 ```go
 func main() {
@@ -161,7 +161,7 @@ func main() {
 
 ### Contexts
 
-Just like in [gocraft/web](https://www.github.com/gocraft/web), gocraft/work lets you use your own contexts. Your context can be empty or it can have various fields in it. The fields can be whatever you want - it's your type! When a new job is processed by a worker, we'll allocate an instance of this struct and pass it to your middleware and handlers. This allows you to pass information from one middleware function to the next, and onto your handlers.
+Just like in [gocraft/web](https://www.github.com/GetSimpl/web), gocraft/work lets you use your own contexts. Your context can be empty or it can have various fields in it. The fields can be whatever you want - it's your type! When a new job is processed by a worker, we'll allocate an instance of this struct and pass it to your middleware and handlers. This allows you to pass information from one middleware function to the next, and onto your handlers.
 
 Custom contexts aren't really needed for trivial example applications, but are very important for production apps. For instance, one field in your context can be your tagged logger. Your tagged logger augments your log statements with a job-id. This lets you filter your logs by that job-id.
 
@@ -245,8 +245,8 @@ The web UI provides a view to view the state of your gocraft/work cluster, inspe
 
 Building an installing the binary:
 ```bash
-go get github.com/gocraft/work/cmd/workwebui
-go install github.com/gocraft/work/cmd/workwebui
+go get github.com/GetSimpl/work/cmd/workwebui
+go install github.com/GetSimpl/work/cmd/workwebui
 ```
 
 Then, you can run it:
@@ -353,7 +353,7 @@ The benches folder contains various benchmark code. In each case, we enqueue 100
 
 | Library | Speed |
 | --- | --- |
-| [gocraft/work](https://www.github.com/gocraft/work) | **20944 jobs/s** |
+| [gocraft/work](https://www.github.com/GetSimpl/work) | **20944 jobs/s** |
 | [jrallison/go-workers](https://www.github.com/jrallison/go-workers) | 19945 jobs/s |
 | [benmanns/goworker](https://www.github.com/benmanns/goworker) | 10328.5 jobs/s |
 | [albrow/jobs](https://www.github.com/albrow/jobs) | 40 jobs/s |
@@ -363,10 +363,10 @@ The benches folder contains various benchmark code. In each case, we enqueue 100
 
 gocraft offers a toolkit for building web apps. Currently these packages are available:
 
-* [gocraft/web](https://github.com/gocraft/web) - Go Router + Middleware. Your Contexts.
-* [gocraft/dbr](https://github.com/gocraft/dbr) - Additions to Go's database/sql for super fast performance and convenience.
-* [gocraft/health](https://github.com/gocraft/health) - Instrument your web apps with logging and metrics.
-* [gocraft/work](https://github.com/gocraft/work) - Process background jobs in Go.
+* [gocraft/web](https://github.com/GetSimpl/web) - Go Router + Middleware. Your Contexts.
+* [gocraft/dbr](https://github.com/GetSimpl/dbr) - Additions to Go's database/sql for super fast performance and convenience.
+* [gocraft/health](https://github.com/GetSimpl/health) - Instrument your web apps with logging and metrics.
+* [gocraft/work](https://github.com/GetSimpl/work) - Process background jobs in Go.
 
 These packages were developed by the [engineering team](https://eng.uservoice.com) at [UserVoice](https://www.uservoice.com) and currently power much of its infrastructure and tech stack.
 

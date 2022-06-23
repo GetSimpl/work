@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/braintree/manners"
-	"github.com/gocraft/web"
-	"github.com/gocraft/work"
-	"github.com/gocraft/work/webui/internal/assets"
+	"github.com/GetSimpl/web"
+	"github.com/GetSimpl/work"
+	"github.com/GetSimpl/work/webui/internal/assets"
 	"github.com/gomodule/redigo/redis"
 )
 

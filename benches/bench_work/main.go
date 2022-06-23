@@ -6,8 +6,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gocraft/health"
-	"github.com/gocraft/work"
+	"github.com/GetSimpl/health"
+	"github.com/GetSimpl/work"
 	"github.com/gomodule/redigo/redis"
 )
 
