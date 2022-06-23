@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/braintree/manners"
-	"github.com/gocraft/web"
 	"github.com/GetSimpl/work"
 	"github.com/GetSimpl/work/webui/internal/assets"
+	"github.com/braintree/manners"
+	"github.com/gocraft/web"
 	"github.com/gomodule/redigo/redis"
 )
 
