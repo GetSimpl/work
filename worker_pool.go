@@ -243,10 +243,16 @@ func (wp *WorkerPool) Stop() {
 	}
 	wg.Wait()
 	wp.heartbeater.stop()
-	wp.retrier.stop()
-	wp.scheduler.stop()
+
+	if !wp.isSchedulerDisabled {
+		wp.retrier.stop()
+		wp.scheduler.stop()
+	}
+
+	if !wp.isPeriodicEnqueuerDisabled {
+		wp.periodicEnqueuer.stop()
+	}
 	wp.deadPoolReaper.stop()
-	wp.periodicEnqueuer.stop()
 }
 
 // Drain drains all jobs in the queue before returning. Note that if jobs are added faster than we can process them, this function wouldn't return.
