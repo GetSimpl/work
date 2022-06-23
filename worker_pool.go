@@ -24,12 +24,14 @@ type WorkerPool struct {
 	started      bool
 	periodicJobs []*periodicJob
 
-	workers          []*worker
-	heartbeater      *workerPoolHeartbeater
-	retrier          *requeuer
-	scheduler        *requeuer
-	deadPoolReaper   *deadPoolReaper
-	periodicEnqueuer *periodicEnqueuer
+	workers                    []*worker
+	heartbeater                *workerPoolHeartbeater
+	retrier                    *requeuer
+	scheduler                  *requeuer
+	deadPoolReaper             *deadPoolReaper
+	periodicEnqueuer           *periodicEnqueuer
+	isSchedulerDisabled        bool
+	isPeriodicEnqueuerDisabled bool
 }
 
 type jobType struct {
@@ -65,7 +67,9 @@ type JobOptions struct {
 
 // WorkerPoolOptions can be passed to NewWorkerPoolWithOptions.
 type WorkerPoolOptions struct {
-	SleepBackoffs []int64 // Sleep backoffs in milliseconds
+	SleepBackoffs              []int64 // Sleep backoffs in milliseconds
+	IsSchedulerDisabled        bool
+	IsPeriodicEnqueuerDisabled bool
 }
 
 // GenericHandler is a job handler without any custom context.
@@ -99,13 +103,15 @@ func NewWorkerPoolWithOptions(ctx interface{}, concurrency uint, namespace strin
 	ctxType := reflect.TypeOf(ctx)
 	validateContextType(ctxType)
 	wp := &WorkerPool{
-		workerPoolID:  makeIdentifier(),
-		concurrency:   concurrency,
-		namespace:     namespace,
-		pool:          pool,
-		sleepBackoffs: workerPoolOpts.SleepBackoffs,
-		contextType:   ctxType,
-		jobTypes:      make(map[string]*jobType),
+		workerPoolID:               makeIdentifier(),
+		concurrency:                concurrency,
+		namespace:                  namespace,
+		pool:                       pool,
+		sleepBackoffs:              workerPoolOpts.SleepBackoffs,
+		contextType:                ctxType,
+		jobTypes:                   make(map[string]*jobType),
+		isSchedulerDisabled:        workerPoolOpts.IsSchedulerDisabled,
+		isPeriodicEnqueuerDisabled: workerPoolOpts.IsPeriodicEnqueuerDisabled,
 	}
 
 	for i := uint(0); i < wp.concurrency; i++ {
@@ -209,9 +215,15 @@ func (wp *WorkerPool) Start() {
 
 	wp.heartbeater = newWorkerPoolHeartbeater(wp.namespace, wp.pool, wp.workerPoolID, wp.jobTypes, wp.concurrency, wp.workerIDs())
 	wp.heartbeater.start()
-	wp.startRequeuers()
-	wp.periodicEnqueuer = newPeriodicEnqueuer(wp.namespace, wp.pool, wp.periodicJobs)
-	wp.periodicEnqueuer.start()
+
+	if !wp.isSchedulerDisabled {
+		wp.startRequeuers()
+	}
+
+	if !wp.isPeriodicEnqueuerDisabled {
+		wp.periodicEnqueuer = newPeriodicEnqueuer(wp.namespace, wp.pool, wp.periodicJobs)
+		wp.periodicEnqueuer.start()
+	}
 }
 
 // Stop stops the workers and associated processes.
