@@ -115,7 +115,7 @@ func (pe *periodicEnqueuer) enqueue() error {
 			script := pe.periodicEnqueueUniqueInScript
 			_, err = redis.String(script.Do(conn, []interface{}{
 				redisKeyScheduled(pe.namespace),
-				id,
+				redisKeyPeriodicEnqueue(pe.namespace, id),
 				rawJSON,
 				epoch,
 				epoch - now,
