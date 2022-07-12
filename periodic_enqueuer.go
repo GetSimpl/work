@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"errors"
 	"github.com/gomodule/redigo/redis"
 	"github.com/robfig/cron/v3"
 )
@@ -113,7 +114,7 @@ func (pe *periodicEnqueuer) enqueue() error {
 			}
 
 			script := pe.periodicEnqueueUniqueInScript
-			_, err = redis.String(script.Do(conn, []interface{}{
+			res, err := redis.String(script.Do(conn, []interface{}{
 				redisKeyScheduled(pe.namespace),
 				redisKeyPeriodicEnqueue(pe.namespace, id),
 				rawJSON,
@@ -123,6 +124,8 @@ func (pe *periodicEnqueuer) enqueue() error {
 
 			if err != nil {
 				return err
+			} else if res == "dup" {
+				return errors.New("duplicate enqueue")
 			}
 		}
 	}
