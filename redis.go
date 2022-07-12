@@ -373,3 +373,16 @@ else
 end
 return 'dup'
 `
+
+// KEYS[1] = scheduled job queue
+// KEYS[2] = Unique job's key. Test for existence and set if we push.
+// ARGV[1] = job
+// ARGV[2] = epoch seconds for job to be run at
+// ARGV[3] = seconds key should be alive for
+var redisLuaPeriodicEnqueueUniqueIn = `
+if redis.call('set', KEYS[2], 1, 'NX', 'EX', ARGV[3]) then
+  redis.call('zadd', KEYS[1], ARGV[2], ARGV[1])
+  return 'ok'
+end
+return 'dup'
+`
