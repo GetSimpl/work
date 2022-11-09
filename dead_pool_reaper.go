@@ -105,6 +105,11 @@ func (r *deadPoolReaper) reap() error {
 		}
 	}
 
+	// Cleanup any stale inprogress queues
+	if err = r.reapStaleInprogressQueues(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -122,6 +127,49 @@ func (r *deadPoolReaper) cleanStaleLockInfo(poolID string, jobTypes []string) er
 	defer conn.Close()
 	if _, err := redisReapLocksScript.Do(conn, scriptArgs...); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (r *deadPoolReaper) reapStaleInprogressQueues() error {
+	conn := r.pool.Get()
+	defer conn.Close()
+
+	workerPoolsKey := redisKeyWorkerPools(r.namespace)
+
+	inProgressQueues, err := redis.Strings(conn.Do("KEYS", "*:inprogress*"))
+
+	if err != nil {
+		return err
+	}
+
+	workerPoolIDs, err := redis.Strings(conn.Do("SMEMBERS", workerPoolsKey))
+	if err != nil {
+		return err
+	}
+
+	// creating map for better searching
+	workerPoolMap := make(map[string]bool)
+	for _, workerPoolID := range workerPoolIDs {
+		workerPoolMap[workerPoolID] = true
+	}
+
+	for _, queue := range inProgressQueues {
+		tokens := strings.Split(queue, ":")
+		workerPoolID := tokens[3]
+		jobName := tokens[2]
+
+		// if queue belongs to inactive worker pool
+		if workerPoolMap[workerPoolID] == false {
+			if err = r.requeueInProgressJobs(workerPoolID, []string{jobName}); err != nil {
+				return err
+			}
+
+			if err = r.cleanStaleLockInfo(workerPoolID, []string{jobName}); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
