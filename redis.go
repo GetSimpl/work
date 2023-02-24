@@ -225,7 +225,7 @@ return nil
 // ARGV[2] = current time in epoch seconds
 var redisLuaZremLpushCmd = `
 local res, j, queue
-res = redis.call('zrangebyscore', KEYS[1], '-inf', ARGV[2], 'LIMIT', 0, 1)
+res = redis.call('ZRANGE', KEYS[1], '-inf', ARGV[2], 'BYSCORE', 'LIMIT', 0, 1)
 if #res > 0 then
   j = cjson.decode(res[1])
   redis.call('zrem', KEYS[1], res[1])
@@ -245,7 +245,7 @@ return nil
 // - job bytes (last job only)
 var redisLuaDeleteSingleCmd = `
 local jobs, i, j, deletedCount, jobBytes
-jobs = redis.call('zrangebyscore', KEYS[1], ARGV[1], ARGV[1])
+jobs = redis.call('ZRANGE', KEYS[1], ARGV[1], ARGV[1], 'BYSCORE')
 local jobCount = #jobs
 jobBytes = ''
 deletedCount = 0
@@ -269,7 +269,7 @@ return {deletedCount, jobBytes}
 // Returns: number of jobs requeued (typically 1 or 0)
 var redisLuaRequeueSingleDeadCmd = `
 local jobs, i, j, queue, requeuedCount
-jobs = redis.call('zrangebyscore', KEYS[1], ARGV[3], ARGV[3])
+jobs = redis.call('ZRANGE', KEYS[1], ARGV[3], ARGV[3], 'BYSCORE')
 local jobCount = #jobs
 requeuedCount = 0
 for i=1,jobCount do
@@ -296,7 +296,7 @@ return requeuedCount
 // Returns: number of jobs requeued
 var redisLuaRequeueAllDeadCmd = `
 local jobs, i, j, queue, requeuedCount
-jobs = redis.call('zrangebyscore', KEYS[1], '-inf', ARGV[2], 'LIMIT', 0, ARGV[3])
+jobs = redis.call('ZRANGE', KEYS[1], '-inf', ARGV[2], 'BYSCORE', 'LIMIT', 0, ARGV[3])
 local jobCount = #jobs
 requeuedCount = 0
 for i=1,jobCount do
