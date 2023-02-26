@@ -147,7 +147,7 @@ for i=1,keylen,%d do
 
   if haveJobs(jobQueue) and not isPaused(pauseKey) and canRun(lockKey, maxConcurrency) then
     acquireLock(lockKey, lockInfoKey, workerPoolID)
-    res = redis.call('rpoplpush', jobQueue, inProgQueue)
+	res = redis.call('LMOVE', jobQueue, inProgQueue, 'RIGHT', 'LEFT')
     return {res, jobQueue, inProgQueue}
   end
 end
@@ -178,7 +178,7 @@ for i=1,keylen,%d do
   jobQueue = KEYS[i+1]
   lockKey = KEYS[i+2]
   lockInfoKey = KEYS[i+3]
-  res = redis.call('rpoplpush', inProgQueue, jobQueue)
+  res = redis.call('LMOVE', inProgQueue, jobQueue, 'RIGHT', 'LEFT')
   if res then
     releaseLock(lockKey, lockInfoKey, workerPoolID)
     return {res, inProgQueue, jobQueue}
