@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"errors"
 	"github.com/gomodule/redigo/redis"
 	"github.com/robfig/cron/v3"
 )
@@ -15,12 +16,13 @@ const (
 )
 
 type periodicEnqueuer struct {
-	namespace             string
-	pool                  *redis.Pool
-	periodicJobs          []*periodicJob
-	scheduledPeriodicJobs []*scheduledPeriodicJob
-	stopChan              chan struct{}
-	doneStoppingChan      chan struct{}
+	namespace                     string
+	pool                          *redis.Pool
+	periodicJobs                  []*periodicJob
+	scheduledPeriodicJobs         []*scheduledPeriodicJob
+	stopChan                      chan struct{}
+	doneStoppingChan              chan struct{}
+	periodicEnqueueUniqueInScript *redis.Script
 }
 
 type periodicJob struct {
@@ -37,11 +39,12 @@ type scheduledPeriodicJob struct {
 
 func newPeriodicEnqueuer(namespace string, pool *redis.Pool, periodicJobs []*periodicJob) *periodicEnqueuer {
 	return &periodicEnqueuer{
-		namespace:        namespace,
-		pool:             pool,
-		periodicJobs:     periodicJobs,
-		stopChan:         make(chan struct{}),
-		doneStoppingChan: make(chan struct{}),
+		namespace:                     namespace,
+		pool:                          pool,
+		periodicJobs:                  periodicJobs,
+		stopChan:                      make(chan struct{}),
+		doneStoppingChan:              make(chan struct{}),
+		periodicEnqueueUniqueInScript: redis.NewScript(2, redisLuaPeriodicEnqueueUniqueIn),
 	}
 }
 
@@ -110,9 +113,19 @@ func (pe *periodicEnqueuer) enqueue() error {
 				return err
 			}
 
-			_, err = conn.Do("ZADD", redisKeyScheduled(pe.namespace), epoch, rawJSON)
+			script := pe.periodicEnqueueUniqueInScript
+			res, err := redis.String(script.Do(conn, []interface{}{
+				redisKeyScheduled(pe.namespace),
+				redisKeyPeriodicEnqueue(pe.namespace, id),
+				rawJSON,
+				epoch,
+				epoch - now,
+			}...))
+
 			if err != nil {
 				return err
+			} else if res == "dup" {
+				return errors.New("duplicate enqueue")
 			}
 		}
 	}
